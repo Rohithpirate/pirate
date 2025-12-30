@@ -5,6 +5,18 @@ import dotenv from "dotenv";
 dotenv.config();
 
 const app = express();
+
+/* ✅ ADD CORS */
+app.use((req, res, next) => {
+  res.setHeader("Access-Control-Allow-Origin", "*");
+  res.setHeader("Access-Control-Allow-Headers", "Content-Type");
+  res.setHeader("Access-Control-Allow-Methods", "POST, OPTIONS");
+  if (req.method === "OPTIONS") {
+    return res.sendStatus(200);
+  }
+  next();
+});
+
 app.use(express.json());
 
 app.post("/chat", async (req, res) => {
@@ -12,7 +24,7 @@ app.post("/chat", async (req, res) => {
     const userMessage = req.body.message;
 
     if (!userMessage) {
-      return res.status(400).json({ reply: "No message sent" });
+      return res.json({ reply: "No message received" });
     }
 
     const response = await fetch(
@@ -33,14 +45,12 @@ app.post("/chat", async (req, res) => {
     const data = await response.json();
 
     if (!data.choices) {
-      return res.json({ reply: "Something went wrong" });
+      return res.json({ reply: "AI error" });
     }
 
-    res.json({
-      reply: data.choices[0].message.content
-    });
+    res.json({ reply: data.choices[0].message.content });
 
-  } catch (error) {
+  } catch (err) {
     res.json({ reply: "Server error" });
   }
 });
@@ -49,5 +59,3 @@ const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
   console.log("Server running on port " + PORT);
 });
-
-

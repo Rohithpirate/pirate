@@ -16,7 +16,6 @@ app.use((req, res, next) => {
 });
 
 app.use(express.json());
-
 app.post("/chat", async (req, res) => {
   try {
     const userMessage = req.body.message;
@@ -26,37 +25,29 @@ app.post("/chat", async (req, res) => {
     }
 
     const response = await fetch(
-  "https://api.openai.com/v1/responses",
-  {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      "Authorization": `Bearer ${process.env.OPENAI_API_KEY}`
-    },
-    body: JSON.stringify({
-      model: "gpt-4.1-mini",
-      input: userMessage
-    })
-  }
-);
+      "https://api.openai.com/v1/responses",
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${process.env.OPENAI_API_KEY}`
+        },
+        body: JSON.stringify({
+          model: "gpt-4.1-mini",
+          input: userMessage
+        })
+      }
+    );
 
-const data = await response.json();
+    const data = await response.json();
 
-if (!data.output || !data.output[0] || !data.output[0].content) {
-  return res.json({ reply: "AI error" });
-}
-
-res.json({
-  reply: data.output[0].content[0].text
-});
-
-    const result = await response.json(); // ✅ declared ONCE
-
-    if (!result.choices) {
+    if (!data.output || !data.output[0] || !data.output[0].content) {
       return res.json({ reply: "AI error" });
     }
 
-    res.json({ reply: result.choices[0].message.content });
+    return res.json({
+      reply: data.output[0].content[0].text
+    });
 
   } catch (err) {
     console.error(err);

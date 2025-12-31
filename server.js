@@ -6,19 +6,26 @@ dotenv.config();
 
 const app = express();
 
-// CORS (important for GitHub Pages)
+/* ===== CORS (important for GitHub Pages) ===== */
 app.use((req, res, next) => {
   res.setHeader("Access-Control-Allow-Origin", "*");
   res.setHeader("Access-Control-Allow-Headers", "Content-Type");
   res.setHeader("Access-Control-Allow-Methods", "POST, OPTIONS");
-  if (req.method === "OPTIONS") return res.sendStatus(200);
+
+  if (req.method === "OPTIONS") {
+    return res.sendStatus(200);
+  }
   next();
 });
 
 app.use(express.json());
+
+/* ===== TEST ROUTE ===== */
 app.get("/", (req, res) => {
-  res.send("Backend is running");
+  res.send("Backend is running ✅");
 });
+
+/* ===== CHAT ROUTE ===== */
 app.post("/chat", async (req, res) => {
   try {
     const userMessage = req.body.message;
@@ -27,34 +34,36 @@ app.post("/chat", async (req, res) => {
       return res.json({ reply: "No message received" });
     }
 
-    const response = await fetch("https://api.openai.com/v1/responses", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "Authorization": `Bearer ${process.env.OPENAI_API_KEY}`
-      },
-      body: JSON.stringify({
-        model: "gpt-4.1-mini",
-        input: userMessage
-      })
-    });
+    const response = await fetch(
+      "https://api.openai.com/v1/chat/completions",
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${process.env.OPENAI_API_KEY}`
+        },
+        body: JSON.stringify({
+          model: "gpt-3.5-turbo",
+          messages: [
+            { role: "user", content: userMessage }
+          ]
+        })
+      }
+    );
 
     const data = await response.json();
 
-    if (!data.output || !data.output[0]?.content) {
-      return res.json({ reply: "AI error" });
-    }
-
     return res.json({
-      reply: data.output[0].content[0].text
+      reply: data.choices[0].message.content
     });
 
-  } catch (err) {
-    console.error(err);
+  } catch (error) {
+    console.error("SERVER ERROR:", error);
     res.json({ reply: "Server error" });
   }
 });
 
+/* ===== START SERVER ===== */
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
   console.log("Server running on port", PORT);
